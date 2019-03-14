@@ -193,8 +193,16 @@ end
 -- node 4 if flag 1 is set on
 -- that map square and zero
 -- otherwise
+-- unless the new node is a 
+-- diagonal, in which case
+-- make it cost a bit more
 function flag_cost(from, node, graph)
- return fget(mget(node.x, node.y), 1) and 4 or 1
+ -- get the standard cost of the tile (grass vs. mud/water)
+ local base_cost = fget(mget(node.x, node.y), 1) and 4 or 1
+ -- make diagonals cost a little more than normal tiles
+ -- (this helps negate "wiggling" in close quarters)
+ if (from.x != node.x and from.y != node.y) return base_cost+1
+ return base_cost
 end
 
 
@@ -203,11 +211,17 @@ end
 -- is unset
 function map_neighbors(node, graph)
  local neighbors = {}
- if (not fget(mget(node.x, node.y - 1), 0)) add(neighbors, {x=node.x, y=node.y - 1})
- if (not fget(mget(node.x, node.y + 1), 0)) add(neighbors, {x=node.x, y=node.y + 1})
- if (not fget(mget(node.x - 1, node.y), 0)) add(neighbors, {x=node.x - 1, y=node.y})
- if (not fget(mget(node.x + 1, node.y), 0)) add(neighbors, {x=node.x + 1, y=node.y})
- return neighbors
+ for xx = -1, 1 do
+  for yy = -1, 1 do
+   if (xx!=0 or yy!=0) maybe_add(node.x+xx, node.y+yy, neighbors)
+  end
+ end return neighbors
+end
+
+-- maybe adds the node to neighbors table
+-- (if flag zero is unset at this position)
+function maybe_add(nx, ny, ntable)
+ if (not fget(mget(nx,ny), 0)) add(ntable, {x=nx, y=ny})
 end
 
 -- estimates the cost from a to
